@@ -1,27 +1,42 @@
-const path = require('path');
-const readFile = require('../utils/read-file');
+const User = require('../models/user');
 
-const usersDataPath = path.join(__dirname, '..', 'data', 'users.json');
-
-module.exports.getUsers = (req, res) => {
-  readFile(usersDataPath)
-    .then((data) => res.send(data))
-    .catch(() => {
-      res.status(500).send({ message: 'Запрашиваемый ресурс не найден' });
-    });
-};
-
-module.exports.getUser = (req, res) => {
-  const { id } = req.params;
-  readFile(usersDataPath)
-    .then((data) => {
-      const userId = data.find((user) => user._id === id);
-      if (!userId) {
-        res.status(404).send({ message: 'Нет пользователя с таким id' });
-      }
-      res.send(userId);
+const getUsers = (req, res) => {
+  User.find({})
+    .then((users) => {
+      res.status(200).send({ users });
     })
-    .catch(() => {
-      res.status(500).send({ message: 'Запрашиваемый ресурс не найден' });
+    .catch((err) => {
+      res.status(500).send({ message: `Запрашиваемый ресурс не найден ${err}` });
     });
 };
+
+const getUser = (req, res) => {
+  User.findById(req.params.id)
+    .orFail(new Error('Не найдено'))
+    .then((user) => res.send({ user }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Введён неправильный id' });
+      } else {
+        res.status(500).send({ message: 'Ошибка сервера' });
+      }
+    });
+};
+
+const createUser = (req, res) => {
+  const { name, about, avatar } = req.body;
+  User.create({ name, about, avatar })
+    .then((user) => res.status(200).send(user))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Ошибка валидации' });
+      }
+      return res.status(500).send({ message: 'Ошибка сервера' });
+    });
+};
+
+module.exports = {
+  getUsers,
+  getUser,
+  createUser,
+}
