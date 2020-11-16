@@ -2,8 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
-const usersRouter = require('./routes/users.js');
-const cardsRouter = require('./routes/cards.js');
+const routes = require('./routes/index');
 
 const app = express();
 const { PORT = 3000 } = process.env;
@@ -24,8 +23,8 @@ app.use((req, res, next) => {
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use('/users', usersRouter);
-app.use('/cards', cardsRouter);
+app.use(routes);
+
 app.use('*', (req, res) => {
   res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
 });
